@@ -1,6 +1,8 @@
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
+import base64
+
 
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
 server = app.server
@@ -10,6 +12,7 @@ app.layout = html.Div([
     html.Div(id='page-content')
 ])
 
+#code for image identifier page
 index_page = html.Div([
     html.Div(className='navbar', children=[
         html.Ul([
@@ -27,19 +30,20 @@ index_page = html.Div([
                 html.H2('Images'),
                 html.Div(id='image-gallery')
             ]),
-            html.Div(className='data-analysis-container', children=[
-                html.H2('Data Analysis'),
-                html.Div(id='data-analysis'),
-                html.Div(className='button-container', children=[
-                    dcc.Upload(id='upload-excel', children=html.Button('Upload Excel File')),
-                    dcc.DatePickerSingle(id='date-input'),
-                    html.Button('Get Weather Data', id='get-weather-btn')
-                ])
+            html.Div(className='data-analysis-container', children=[ 
+                html.H2('Data Analysis'), 
+                html.Div(id='data-analysis'), 
+                html.Div(className='button-container', children=[ 
+                    dcc.Upload(id='upload-image', children=html.Button('Upload Image', className='upload-button'), 
+                    className='upload-container'), 
+                    dcc.DatePickerSingle(id='date-input', className='date-picker')
+                ]) 
             ])
         ])
     ])
 ])
 
+#code for about us page
 about_us_page = html.Div([
     html.H1('About Us'),
     html.Div(className='navbar', children=[
@@ -84,7 +88,7 @@ about_us_page = html.Div([
     ])
 ])
 
-
+#code for overview page
 overview_page = html.Div([
     html.H1('Overview'),
     html.Div(className='navbar', children=[
@@ -186,9 +190,11 @@ overview_page = html.Div([
 ])
 
 
+#displays page based on the link (for the navbar)
+@app.callback(
+        Output('page-content', 'children'),
+        Input('url', 'pathname'))
 
-@app.callback(Output('page-content', 'children'),
-              Input('url', 'pathname'))
 def display_page(pathname):
     if pathname == '/about_us':
         return about_us_page
@@ -197,5 +203,17 @@ def display_page(pathname):
     else:
         return index_page
 
+#displays uploaded image
+@app.callback(
+    Output('image-gallery', 'children'),
+    [Input('upload-image', 'contents')]
+)
+def display_uploaded_image(contents):
+    if contents is not None:
+        content_type, content_string = contents.split(',')
+        return html.Img(src=f'data:image/png;base64,{content_string}', style={'width': '350px', 'height': 'auto', 'text-align': 'center'})
+    return 'Upload an image to display it here.'
+
 if __name__ == '__main__':
     app.run_server(debug=True)
+
