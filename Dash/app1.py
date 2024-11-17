@@ -8,7 +8,7 @@ from PIL import Image
 import torch.nn as nn
 import base64
 import io
-from NueralClass import SingleLabelCNN
+from Dash.NueralClass import SingleLabelCNN
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = torch.load('final_model2.pth', map_location=device)
@@ -17,23 +17,15 @@ app = dash.Dash(__name__, suppress_callback_exceptions=True)
 server = app.server
 
 label_map = {
-    0: 'flowering',
-    1: 'budding',
-    2: 'fruiting',
-    3: 'no evidence',
-    4: 'budding & flowering',
-    5: 'flowering & budding',
-    6: 'flowering & fruiting',
-    7: 'flowering, budding & fruiting'
+    0: 'Flowers',
+    1: 'Buds',
+    2: 'Fruit',
+    3: 'No Evidence',
+    4: 'Buds & Flowers',
+    5: 'Flowers & Buds',
+    6: 'Flowers & Fruit',
+    7: 'Flower, Buds & Fruit'
 }
-
-app = dash.Dash(__name__, suppress_callback_exceptions=True)
-server = app.server
-
-app.layout = html.Div([
-    dcc.Location(id='url', refresh=False),
-    html.Div(id='page-content')
-])
 def preprocess_image(image):
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
@@ -56,9 +48,7 @@ app.layout = html.Div([
     html.Div(id='page-content')
 ])
 
-#code for image identifier page
 index_page = html.Div([
-    # Navigation Bar
     html.Div(className='navbar', children=[
         html.Ul([
             html.Li(html.A('Overview', href='/overview')),
@@ -66,71 +56,28 @@ index_page = html.Div([
             html.Li(html.A('About Us', href='/about_us'))
         ])
     ]),
-    
-    # Header
     html.Header([
         html.H1('Image Identifying Model')
     ]),
-    
-    # Main Content
     html.Main([
-        # Main Container
         html.Div(className='container', children=[
-            # Left Section: Image Gallery
             html.Div(className='image-container', children=[
                 html.H2('Images'),
                 html.Div(id='image-gallery')
             ]),
-            
-            # Right Section: Upload and Prediction
             html.Div(className='data-analysis-container', children=[
                 html.H2('Data Analysis'),
                 html.Div(id='data-analysis'),
-                
-                # Upload and Prediction Section
-                html.Div(className='upload-prediction-container', children=[
-                    # Image Upload
-                    dcc.Upload(
-                        id="upload-image",
-                        children=html.Div(["Drag and Drop or ", html.A("Select an Image", href="#")]),
-                        style={
-                            "width": "100%",
-                            "height": "60px",
-                            "lineHeight": "60px",
-                            "borderWidth": "1px",
-                            "borderStyle": "dashed",
-                            "borderRadius": "5px",
-                            "textAlign": "center",
-                            "marginBottom": "20px"
-                        },
-                        multiple=False
-                    )
-                    
-                ]),
+                html.Div(className='button-container', children=[
+                    dcc.Upload(id='upload-excel', children=html.Button('Upload Excel File')),
+                    dcc.DatePickerSingle(id='date-input'),
+                    html.Button('Get Weather Data', id='get-weather-btn')
+                ])
             ])
         ])
     ])
 ])
-def update_output(content):
-    if content is not None:
-        # Decode the image
-        content_type, content_string = content.split(',')
-        decoded = base64.b64decode(content_string)
-        image = Image.open(io.BytesIO(decoded))
 
-        # Predict the class
-        prediction = predict(image)
-
-        # Display the uploaded image
-        children = html.Div([
-            html.H5("Uploaded Image"),
-            html.Img(src=content, style={"width": "100%", "height": "auto"})
-        ])
-
-        return children, html.H3(prediction)
-
-    return None, "No image uploaded"
-#code for about us page
 about_us_page = html.Div([
     html.H1('About Us'),
     html.Div(className='navbar', children=[
@@ -175,7 +122,7 @@ about_us_page = html.Div([
     ])
 ])
 
-#code for overview page
+
 overview_page = html.Div([
     html.H1('Overview'),
     html.Div(className='navbar', children=[
@@ -275,13 +222,59 @@ overview_page = html.Div([
     ]),
     html.Div(className='footer')
 ])
+app.layout = dbc.Container([
+    dbc.Row([
+        dbc.Col(html.H1("Plant Phenology Classification"), className="text-center")
+    ]),
+    dbc.Row([
+        dbc.Col([
+            dcc.Upload(
+                id="upload-image",
+                children=html.Div(["Drag and Drop or ", html.A("Select an Image")]),
+                style={
+                    "width": "100%", "height": "60px", "lineHeight": "60px",
+                    "borderWidth": "1px", "borderStyle": "dashed",
+                    "borderRadius": "5px", "textAlign": "center"
+                },
+                multiple=False
+            ),
+            html.Div(id="output-image-upload")
+        ], width=6),
+        dbc.Col([
+            html.H3("Predicted Class"),
+            html.Div(id="prediction-output", className="text-center")
+        ], width=6)
+    ])
+])
 
 
-#displays page based on the link (for the navbar)
 @app.callback(
-        Output('page-content', 'children'),
-        Input('url', 'pathname'))
+    [Output("output-image-upload", "children"),
+     Output("prediction-output", "children")],
+    [Input("upload-image", "contents")]
+)
+def update_output(content):
+    if content is not None:
+        # Decode the image
+        content_type, content_string = content.split(',')
+        decoded = base64.b64decode(content_string)
+        image = Image.open(io.BytesIO(decoded))
 
+        # Predict the class
+        prediction = predict(image)
+
+        # Display the uploaded image
+        children = html.Div([
+            html.H5("Uploaded Image"),
+            html.Img(src=content, style={"width": "100%", "height": "auto"})
+        ])
+
+        return children, html.H3(prediction)
+
+    return None, "No image uploaded"
+
+@app.callback(Output('page-content', 'children'),
+              Input('url', 'pathname'))
 def display_page(pathname):
     if pathname == '/about_us':
         return about_us_page
@@ -290,40 +283,5 @@ def display_page(pathname):
     else:
         return index_page
 
-#displays uploaded image
-@app.callback(
-    Output('image-gallery', 'children'),
-    [Input('upload-image', 'contents')]
-)
-def display_uploaded_image(contents):
-    if contents is not None:
-        content_type, content_string = contents.split(',')
-        decoded = base64.b64decode(content_string)
-        image = Image.open(io.BytesIO(decoded))
-
-        # Predict the class
-        prediction = predict(image)
-
-        # Display the uploaded image
-        if(prediction != "no evidence"):
-            children = html.Div([
-                html.H3("Uploaded Image"),
-                html.Img(src=contents, style={"width": "100%", "height": "auto"}),
-                html.H3(f"Prediction"),
-                html.H4(f"This aloe-ferox is currently in the {prediction} stage")
-            ])
-        else:
-            children = html.Div([
-                html.H3("Uploaded Image"),
-                html.Img(src=contents, style={"width": "100%", "height": "auto"}),
-                html.H3(f"Prediction"),
-                html.H4(f"This aloe-ferox could not be identified. Or the image you uploaded is not an aloe-ferox plant")
-            ])
-
-        return children
-
-    return None, "No image uploaded"
-        
 if __name__ == '__main__':
     app.run_server(debug=True)
-
