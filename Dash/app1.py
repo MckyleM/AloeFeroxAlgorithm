@@ -8,7 +8,7 @@ from PIL import Image
 import torch.nn as nn
 import base64
 import io
-from Dash.NueralClass import SingleLabelCNN
+from Dash.NeuralClass import SingleLabelCNN
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = torch.load('final_model2.pth', map_location=device)

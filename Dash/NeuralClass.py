@@ -1,4 +1,7 @@
 import torch.nn as nn
+import torchvision
+from torchvision import models
+
 class SingleLabelCNN(nn.Module):
     def __init__(self, num_classes):
         super(SingleLabelCNN, self).__init__()
