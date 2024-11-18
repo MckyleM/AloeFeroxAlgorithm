@@ -324,6 +324,7 @@ def display_uploaded_image(contents):
         
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8050))
+    print(f"Port: {port}")
     app.run_server(debug=True, host='0.0.0.0', port=port)
 
 
