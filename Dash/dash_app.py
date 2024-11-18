@@ -11,7 +11,7 @@ import io
 from NueralClass import SingleLabelCNN
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = torch.load('aloe_model.pth', map_location=device)
+model = torch.load('aloe_model2.pth', map_location=device)
 model.eval()
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
 server = app.server
