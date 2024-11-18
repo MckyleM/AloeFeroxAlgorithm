@@ -9,6 +9,7 @@ import torch.nn as nn
 import base64
 import io
 from NueralClass import SingleLabelCNN
+import os
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = torch.load('aloe_model2.pth', map_location=device)
@@ -325,5 +326,7 @@ def display_uploaded_image(contents):
     return None, "No image uploaded"
         
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    port = int(os.environ.get('PORT', 8050))
+    app.run_server(debug=True, host='0.0.0.0', port=port)
+
 
